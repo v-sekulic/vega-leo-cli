@@ -1,0 +1,21 @@
+{
+  "name": "vega-leo-cli",
+  "version": "0.1.1",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "vega-leo-cli": "index.js"
+  },
+  "keywords": [],
+  "author": "Veljko Sekulic",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "figlet": "^1.7.0",
+    "inquirer": "^11.1.0"
+  }
+}
