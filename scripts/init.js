@@ -7,127 +7,120 @@ import { execSync } from "child_process";
 import path from "path";
 import fs from "fs-extra";
 
-import { Command } from "commander";
-import { runScript } from "./commands.js"; // Import the command handler
+// Prompt for project name and structure type (monorepo vs single app)
+inquirer
+  .prompt([
+    {
+      type: "input",
+      name: "projectName",
+      message: "What is your project name?",
+    },
+    {
+      type: "list",
+      name: "structureType",
+      message: "Choose the structure you want to scaffold:",
+      choices: ["Monorepo (npm workspaces)", "Single App"],
+    },
+  ])
+  .then(async (answers) => {
+    const { projectName, structureType } = answers;
 
-const scaffoldProject = () => {
-  // Prompt for project name and structure type (monorepo vs single app)
-  inquirer
-    .prompt([
-      {
-        type: "input",
-        name: "projectName",
-        message: "What is your project name?",
-      },
-      {
-        type: "list",
-        name: "structureType",
-        message: "Choose the structure you want to scaffold:",
-        choices: ["Monorepo (npm workspaces)", "Single App"],
-      },
-    ])
-    .then(async (answers) => {
-      const { projectName, structureType } = answers;
+    // Define the path where the new project will be created
+    const projectPath = path.join(process.cwd(), projectName);
 
-      // Define the path where the new project will be created
-      const projectPath = path.join(process.cwd(), projectName);
+    // Check if the directory already exists
+    if (fs.existsSync(projectPath)) {
+      console.error(
+        chalk.red(
+          `❌ Error: A folder with the name "${projectName}" already exists.`
+        )
+      );
+      process.exit(1);
+    }
 
-      // Check if the directory already exists
-      if (fs.existsSync(projectPath)) {
-        console.error(
-          chalk.red(
-            `❌ Error: A folder with the name "${projectName}" already exists.`
-          )
-        );
-        process.exit(1);
-      }
+    try {
+      // Run degit to clone the monorepo template
+      execSync(`npx degit v-sekulic/vega-react-starter ${projectName}`, {
+        stdio: "inherit",
+        cwd: process.cwd(),
+      });
 
-      try {
-        // Run degit to clone the monorepo template
-        execSync(`npx degit v-sekulic/vega-react-starter ${projectName}`, {
-          stdio: "inherit",
-          cwd: process.cwd(),
-        });
+      console.log(
+        chalk.green(`✅ Successfully cloned project: ${projectName}`)
+      );
 
-        console.log(
-          chalk.green(`✅ Successfully cloned project: ${projectName}`)
-        );
+      // for SINGLE APP restructure code from monorepo
+      if (structureType === "Single App")
+        transformMonorepoToSingleApp({ projectPath });
 
-        // for SINGLE APP restructure code from monorepo
-        if (structureType === "Single App")
-          transformMonorepoToSingleApp({ projectPath });
+      // for MONOREPO just pull all the code
 
-        // for MONOREPO just pull all the code
-
-        // Step 10: Prompt to initialize git repository
-        inquirer
-          .prompt([
-            {
-              type: "confirm",
-              name: "initGit",
-              message: "Do you want to initialize a Git repository?",
-              default: true,
-            },
-          ])
-          .then((gitAnswer) => {
-            if (gitAnswer.initGit) {
-              try {
-                execSync(`git init`, {
-                  stdio: "inherit",
-                  cwd: projectPath,
-                });
-                console.log(chalk.green(`✅ Git repository initialized.`));
-              } catch (error) {
-                console.error(
-                  chalk.red(`❌ Error initializing Git: ${error.message}`)
-                );
-              }
+      // Step 10: Prompt to initialize git repository
+      inquirer
+        .prompt([
+          {
+            type: "confirm",
+            name: "initGit",
+            message: "Do you want to initialize a Git repository?",
+            default: true,
+          },
+        ])
+        .then((gitAnswer) => {
+          if (gitAnswer.initGit) {
+            try {
+              execSync(`git init`, {
+                stdio: "inherit",
+                cwd: projectPath,
+              });
+              console.log(chalk.green(`✅ Git repository initialized.`));
+            } catch (error) {
+              console.error(
+                chalk.red(`❌ Error initializing Git: ${error.message}`)
+              );
             }
+          }
 
-            // Step 11: Ask the user if they want to install dependencies after Git initialization
-            inquirer
-              .prompt([
-                {
-                  type: "confirm",
-                  name: "installDeps",
-                  message: "Do you want to install dependencies now?",
-                  default: true,
-                },
-              ])
-              .then((installAnswer) => {
-                if (installAnswer.installDeps) {
-                  try {
-                    execSync(`npm install`, {
-                      stdio: "inherit",
-                      cwd: projectPath,
-                    });
-                    console.log(
-                      chalk.green(
-                        `✅ Dependencies installed successfully for ${projectName}.`
-                      )
-                    );
-                  } catch (error) {
-                    console.error(
-                      chalk.red(
-                        `❌ Error running npm install: ${error.message}`
-                      )
-                    );
-                  }
-                } else {
+          // Step 11: Ask the user if they want to install dependencies after Git initialization
+          inquirer
+            .prompt([
+              {
+                type: "confirm",
+                name: "installDeps",
+                message: "Do you want to install dependencies now?",
+                default: true,
+              },
+            ])
+            .then((installAnswer) => {
+              if (installAnswer.installDeps) {
+                try {
+                  execSync(`npm install`, {
+                    stdio: "inherit",
+                    cwd: projectPath,
+                  });
                   console.log(
-                    chalk.yellow(
-                      `⚠️ You chose not to install dependencies. Run 'npm install' manually when ready.`
+                    chalk.green(
+                      `✅ Dependencies installed successfully for ${projectName}.`
                     )
                   );
+                } catch (error) {
+                  console.error(
+                    chalk.red(`❌ Error running npm install: ${error.message}`)
+                  );
                 }
-              });
-          });
-      } catch (error) {
-        console.error(chalk.red(`❌ Error creating project: ${error.message}`));
-        process.exit(1);
-      }
-    });
-};
+              } else {
+                console.log(
+                  chalk.yellow(
+                    `⚠️ You chose not to install dependencies. Run 'npm install' manually when ready.`
+                  )
+                );
+              }
+            });
+        });
+    } catch (error) {
+      console.error(chalk.red(`❌ Error creating project: ${error.message}`));
+      process.exit(1);
+    }
+  });
 
 const transformMonorepoToSingleApp = ({ projectPath }) => {
   // Start the process of transforming into a single app
@@ -317,71 +310,3 @@ const transformMonorepoToSingleApp = ({ projectPath }) => {
     console.log(chalk.green(`✅ Updated 'components.json' for Single App.`));
   }
 };
-
-const program = new Command();
-
-program
-  .command("init")
-  .description("Sets up the project")
-  .action(() => {
-    scaffoldProject();
-  });
-
-// Define the 'create:ts-lib' command
-program
-  .command("create:ts-lib <name>")
-  .description("Create a new TypeScript library")
-  .action((name) => {
-    runScript("create-ts-lib", name);
-  });
-
-// Define the 'create:react-lib' command
-program
-  .command("create:react-lib <name>")
-  .description("Create a new React library")
-  .action((name) => {
-    runScript("create-react-lib", name);
-  });
-
-// Define the 'create:react-app' command
-program
-  .command("create:react-app <name>")
-  .description("Create a new React app")
-  .action((name) => {
-    runScript("create-react-app", name);
-  });
-
-program
-  .command("component <name>")
-  .description("Adds Shadcn component to the ui-kit")
-  .action((name) => {
-    try {
-      execSync(`npx shadcn@latest add ${name}`, {
-        stdio: "inherit",
-      });
-      console.log(
-        `✅ Successfully added Shadcn component to 'packages/ui-kit': ${name}`
-      );
-    } catch (error) {
-      console.error(`❌ Error adding component: ${error.message}`);
-      process.exit(1);
-    }
-  });
-
-// Show help if no command is provided
-program.parse(process.argv);
-
-if (!process.argv.slice(2).length) {
-  program.outputHelp();
-}
-
-// Display ASCII Art
-console.log(
-  chalk.yellowBright(
-    figlet.textSync("Leo CLI", {
-      font: "Standard",
-      horizontalLayout: "default",
-      verticalLayout: "default",
-    })
-  )
-);
