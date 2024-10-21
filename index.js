@@ -23,7 +23,8 @@ const scaffoldProject = () => {
         type: "list",
         name: "structureType",
         message: "Choose the structure you want to scaffold:",
-        choices: ["Monorepo (npm workspaces)", "Single App"],
+        choices: ["Single application", "Monorepo (npm workspaces)"],
+        default: "Monorepo (npm workspaces)",
       },
     ])
     .then(async (answers) => {
@@ -116,7 +117,7 @@ const scaffoldProject = () => {
                 } else {
                   console.log(
                     chalk.yellow(
-                      `⚠️ You chose not to install dependencies. Run 'npm install' manually when ready.`
+                      `⚠️  You chose not to install dependencies. Run 'npm install' manually when ready.`
                     )
                   );
                 }
