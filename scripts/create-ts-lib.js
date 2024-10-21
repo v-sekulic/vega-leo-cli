@@ -1,8 +1,15 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
-const inquirer = require('inquirer').default;
+import {
+  existsSync,
+  readdirSync,
+  lstatSync,
+  mkdirSync,
+  writeFileSync,
+  readFileSync,
+} from 'fs';
+import inquirer from 'inquirer';
+import path from 'path';
 
 // Get the library name from the command line argument
 const libraryName = process.argv[2];
@@ -12,22 +19,25 @@ if (!libraryName) {
   process.exit(1);
 }
 
-// Define paths
-const libraryPath = path.join(__dirname, '..', 'packages', libraryName);
+// Use `process.cwd()` to get the user's project root
+const rootDir = process.cwd();
+
+// Define paths relative to the user's project
+const libraryPath = path.join(rootDir, 'packages', libraryName);
 const srcPath = path.join(libraryPath, 'src');
 const testsPath = path.join(libraryPath, 'tests');
-const appsDir = path.join(__dirname, '..', 'apps');
+const appsDir = path.join(rootDir, 'apps');
 
 // Check if `apps` directory exists
-if (!fs.existsSync(appsDir)) {
+if (!existsSync(appsDir)) {
   console.error('No `apps` directory found. Please ensure it exists.');
   process.exit(1);
 }
 
 // Get the list of apps in the `apps` directory
-const apps = fs.readdirSync(appsDir).filter((app) => {
+const apps = readdirSync(appsDir).filter((app) => {
   const appPath = path.join(appsDir, app);
-  return fs.lstatSync(appPath).isDirectory();
+  return lstatSync(appPath).isDirectory();
 });
 
 // Define content for package.json
@@ -72,8 +82,7 @@ inquirer
     {
       type: 'list',
       name: 'selectedApp',
-      message:
-        'Which app do you want to add the new library to as a dependency?',
+      message: 'Which app do you want to add the new library to as a dependency?',
       choices: apps,
     },
   ])
@@ -82,18 +91,18 @@ inquirer
     const appPackageJsonPath = path.join(appsDir, selectedApp, 'package.json');
 
     // Ensure the `packages/[libraryName]` folder exists
-    fs.mkdirSync(libraryPath, { recursive: true });
-    fs.mkdirSync(srcPath, { recursive: true });
-    fs.mkdirSync(testsPath, { recursive: true });
+    mkdirSync(libraryPath, { recursive: true });
+    mkdirSync(srcPath, { recursive: true });
+    mkdirSync(testsPath, { recursive: true });
 
     // Write package.json for the new library
-    fs.writeFileSync(
+    writeFileSync(
       path.join(libraryPath, 'package.json'),
       JSON.stringify(packageJsonContent, null, 2)
     );
 
     // Write tsconfig.json for the new library
-    fs.writeFileSync(
+    writeFileSync(
       path.join(libraryPath, 'tsconfig.json'),
       JSON.stringify(tsconfigContent, null, 2)
     );
@@ -102,7 +111,7 @@ inquirer
     const indexTsContent = `export const sum = (a: number, b: number) => {
       return a + b;
     };`;
-    fs.writeFileSync(path.join(srcPath, 'index.ts'), indexTsContent);
+    writeFileSync(path.join(srcPath, 'index.ts'), indexTsContent);
 
     // Create a test for the sum function in tests/sum.test.ts
     const testTsContent = `import { sum } from '../src';
@@ -113,21 +122,21 @@ inquirer
       });
     });
     `;
-    fs.writeFileSync(path.join(testsPath, 'sum.test.ts'), testTsContent);
+    writeFileSync(path.join(testsPath, 'sum.test.ts'), testTsContent);
 
     console.log(`✅ Successfully created TypeScript library: ${libraryName}`);
 
     // Check if the app's package.json exists
-    if (fs.existsSync(appPackageJsonPath)) {
+    if (existsSync(appPackageJsonPath)) {
       // Read the app's package.json
-      const appPackageJson = JSON.parse(fs.readFileSync(appPackageJsonPath));
+      const appPackageJson = JSON.parse(readFileSync(appPackageJsonPath));
 
       // Add the new library as a dependency to the app
       appPackageJson.dependencies = appPackageJson.dependencies || {};
       appPackageJson.dependencies[libraryName] = '*';
 
       // Write the updated package.json back to the app folder
-      fs.writeFileSync(
+      writeFileSync(
         appPackageJsonPath,
         JSON.stringify(appPackageJson, null, 2)
       );

@@ -1,22 +1,25 @@
 #!/usr/bin/env node
 
-const { execSync } = require('child_process');
-const path = require('path');
-const fs = require('fs');
+import { execSync } from "child_process";
+import { existsSync, readFileSync, writeFileSync } from "fs";
+import path from "path";
 
 // Get the app name from the command line argument
 const appName = process.argv[2];
 
 if (!appName) {
-  console.error('❌ Please provide an app name');
+  console.error("❌ Please provide an app name");
   process.exit(1);
 }
 
+// Use `process.cwd()` to get the user's project root
+const rootDir = process.cwd();
+
 // Define the path where the new app will be created
-const appPath = path.join(__dirname, '..', 'apps', appName);
+const appPath = path.join(rootDir, "apps", appName);
 
 // Check if the app already exists
-if (fs.existsSync(appPath)) {
+if (existsSync(appPath)) {
   console.error(`❌ Error: An app with the name "${appName}" already exists.`);
   process.exit(1);
 }
@@ -24,8 +27,8 @@ if (fs.existsSync(appPath)) {
 // Run the Vite create command
 try {
   execSync(`npx degit v-sekulic/vite-react-template ${appName}`, {
-    stdio: 'inherit',
-    cwd: path.join(__dirname, '..', 'apps'), // Ensure it's created under the apps folder
+    stdio: "inherit",
+    cwd: path.join(rootDir, "apps"), // Ensure it's created under the apps folder
   });
 
   console.log(`✅ Successfully created React app: ${appName}`);
@@ -35,20 +38,18 @@ try {
 }
 
 // Update the name in the new app's package.json
-const appPackageJsonPath = path.join(appPath, 'package.json');
-if (fs.existsSync(appPackageJsonPath)) {
-  const appPackageJson = JSON.parse(
-    fs.readFileSync(appPackageJsonPath, 'utf8')
-  );
+const appPackageJsonPath = path.join(appPath, "package.json");
+if (existsSync(appPackageJsonPath)) {
+  const appPackageJson = JSON.parse(readFileSync(appPackageJsonPath, "utf8"));
 
   // Set the app name in package.json
   appPackageJson.name = appName;
 
   // Write the updated package.json back to disk
-  fs.writeFileSync(
+  writeFileSync(
     appPackageJsonPath,
     JSON.stringify(appPackageJson, null, 2),
-    'utf8'
+    "utf8"
   );
   console.log(`✅ Updated package.json with the correct app name: ${appName}`);
 } else {
@@ -56,12 +57,10 @@ if (fs.existsSync(appPackageJsonPath)) {
 }
 
 // Path to the root package.json
-const rootPackageJsonPath = path.join(__dirname, '..', 'package.json');
+const rootPackageJsonPath = path.join(rootDir, "package.json");
 
 // Read the root package.json
-const rootPackageJson = JSON.parse(
-  fs.readFileSync(rootPackageJsonPath, 'utf8')
-);
+const rootPackageJson = JSON.parse(readFileSync(rootPackageJsonPath, "utf8"));
 
 // Define new scripts for the created app
 const newScripts = {
@@ -71,7 +70,7 @@ const newScripts = {
 };
 
 // Add the new scripts if they don't already exist
-Object.keys(newScripts).forEach(script => {
+Object.keys(newScripts).forEach((script) => {
   if (!rootPackageJson.scripts[script]) {
     rootPackageJson.scripts[script] = newScripts[script];
   } else {
@@ -80,10 +79,10 @@ Object.keys(newScripts).forEach(script => {
 });
 
 // Write the updated root package.json back to disk
-fs.writeFileSync(
+writeFileSync(
   rootPackageJsonPath,
   JSON.stringify(rootPackageJson, null, 2),
-  'utf8'
+  "utf8"
 );
 
 console.log(
