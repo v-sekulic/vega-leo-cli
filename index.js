@@ -2,6 +2,7 @@
 
 import figlet from "figlet";
 import chalk from "chalk";
+import gradient from "gradient-string";
 import inquirer from "inquirer";
 import { execSync } from "child_process";
 import path from "path";
@@ -375,13 +376,21 @@ if (!process.argv.slice(2).length) {
   program.outputHelp();
 }
 
-// Display ASCII Art
-console.log(
-  chalk.yellowBright(
-    figlet.textSync("Leo CLI", {
-      font: "Standard",
-      horizontalLayout: "default",
-      verticalLayout: "default",
-    })
-  )
-);
+const leoText = figlet.textSync("Leo", {
+  font: "Standard",
+  horizontalLayout: "default",
+  verticalLayout: "default",
+}).split("\n");
+
+const cliText = figlet.textSync("CLI", {
+  font: "Standard",
+  horizontalLayout: "default",
+  verticalLayout: "default",
+}).split("\n");
+
+leoText.forEach((line, index) => {
+  console.log(
+    gradient(['orange', 'yellow'])(line) + 
+    gradient(['blue', 'purple'])(cliText[index] || "") 
+  );
+});
