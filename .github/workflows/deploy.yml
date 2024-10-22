@@ -30,7 +30,7 @@ jobs:
       - name: Bump version
         run: |
           echo "Bumping version..."
-          npm version patch -m "ci: bump version to %s"
+          npm version 0.1.5 -m "ci: bump version to %s"
 
       - name: Publish to NPM
         run: npm publish
