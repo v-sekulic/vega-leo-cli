@@ -24,11 +24,17 @@ const scaffoldProject = () => {
         type: "list",
         name: "structureType",
         message: "Choose the structure you want to scaffold:",
-        choices: ["Monorepo (npm workspaces)", "Single App"],
+        choices: ["Single application", "Monorepo (npm workspaces)"],
+        default: "Monorepo (npm workspaces)",
       },
     ])
     .then(async (answers) => {
-      const { projectName, structureType } = answers;
+      let { projectName, structureType } = answers;
+
+      // Handle case when project name contains more than one word
+
+      // Replace spaces in the project name with hyphens
+      projectName = projectName.split(" ").join("-");
 
       // Define the path where the new project will be created
       const projectPath = path.join(process.cwd(), projectName);
@@ -58,6 +64,8 @@ const scaffoldProject = () => {
         if (structureType === "Single App")
           transformMonorepoToSingleApp({ projectPath });
 
+        renameProjectNameInPackageJson({ projectPath, projectName });
+        
         // for MONOREPO just pull all the code
 
         // Step 10: Prompt to initialize git repository
@@ -117,7 +125,7 @@ const scaffoldProject = () => {
                 } else {
                   console.log(
                     chalk.yellow(
-                      `⚠️ You chose not to install dependencies. Run 'npm install' manually when ready.`
+                      `⚠️  You chose not to install dependencies. Run 'npm install' manually when ready.`
                     )
                   );
                 }
@@ -318,6 +326,38 @@ const transformMonorepoToSingleApp = ({ projectPath }) => {
     console.log(chalk.green(`✅ Updated 'components.json' for Single App.`));
   }
 };
+
+const renameProjectNameInPackageJson = ({ projectPath, projectName }) => { 
+  const rootPackageJsonPath = path.join(projectPath, "package.json");
+  const lockFilePath = path.join(projectPath, "package-lock.json");
+    
+  if (fs.existsSync(rootPackageJsonPath)) {
+      const rootPackageJson = JSON.parse(
+          fs.readFileSync(rootPackageJsonPath, "utf8")
+      );
+      
+      // Update the name field in package.json
+      rootPackageJson.name = projectName; // Set the name from user input
+      fs.writeFileSync(rootPackageJsonPath, JSON.stringify(rootPackageJson, null, 2));
+  } else {
+      console.error(chalk.red(`❌ 'package.json' not found in the cloned project.`));
+      process.exit(1);
+  }
+
+  // Update the name field in package-lock.json if it exists
+  if (fs.existsSync(lockFilePath)) {
+      const lockFile = JSON.parse(
+          fs.readFileSync(lockFilePath, "utf8")
+      );
+      
+      // Update the name field
+      lockFile.name = projectName; // Set the name from user input
+      lockFile.packages[""].name = projectName; // Set the name at the root level
+      fs.writeFileSync(lockFilePath, JSON.stringify(lockFile, null, 2));
+  } else {
+      console.error(chalk.red(`❌ 'package-lock.json' not found in the cloned project.`));
+  }
+}
 
 const program = new Command();
 
