@@ -27,7 +27,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           npm version patch -m "ci: bump version to %s"
-          git push --follow-tags
+
+      - name: Push changes with access token
+        run: git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/v-sekulic/vega-leo-cli.git --follow-tags
 
       - name: Publish to NPM
         run: npm publish
