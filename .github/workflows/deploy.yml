@@ -27,10 +27,16 @@ jobs:
           git config --global user.email "nikola.perisic@vegait.rs"
           git config --global user.name "Nikola Perišić"
 
+      - name: Get version from commit message
+        id: get_version
+        run: |
+          VERSION=$(git log -1 --pretty=%B | grep -oP '(?<=bump version to )\d+\.\d+\.\d+')
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
       - name: Bump version
         run: |
-          echo "Bumping version..."
-          npm version 0.1.5 -m "ci: bump version to %s"
+          echo "Bumping version to $VERSION..."
+          npm version $VERSION -m "ci: bump version to %s"
 
       - name: Publish to NPM
         run: npm publish
