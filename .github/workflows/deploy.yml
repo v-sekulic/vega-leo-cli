@@ -29,7 +29,7 @@ jobs:
           npm version patch -m "ci: bump version to %s"
 
       - name: Push changes with access token
-        run: git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/v-sekulic/vega-leo-cli.git --follow-tags
+        run: git push https://x-access-token:${{ secrets.TOKEN }}@github.com/v-sekulic/vega-leo-cli.git --follow-tags
 
       - name: Publish to NPM
         run: npm publish
