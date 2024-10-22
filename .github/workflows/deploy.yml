@@ -22,6 +22,11 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Set git
+        run: |
+          git config --global user.email "nikola.perisic@vegait.rs"
+          git config --global user.name "Nikola Perišić"
+
       - name: Bump version
         run: |
           echo "Bumping version..."
