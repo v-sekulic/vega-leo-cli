@@ -23,7 +23,9 @@ jobs:
         run: npm install
 
       - name: Bump version
-        run: npm version patch -m "ci: bump version to %s"
+        run: |
+          echo "Bumping version..."
+          npm version patch -m "ci: bump version to %s"
 
       - name: Publish to NPM
         run: npm publish
