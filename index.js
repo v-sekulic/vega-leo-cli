@@ -28,7 +28,12 @@ const scaffoldProject = () => {
       },
     ])
     .then(async (answers) => {
-      const { projectName, structureType } = answers;
+      let { projectName, structureType } = answers;
+
+      // Handle case when project name contains more than one word
+
+      // Replace spaces in the project name with hyphens
+      projectName = projectName.split(" ").join("-");
 
       // Define the path where the new project will be created
       const projectPath = path.join(process.cwd(), projectName);
